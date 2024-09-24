@@ -2,13 +2,7 @@
 #define STR_H
 
 #include <stdlib.h>
-
-enum StringType {
-	UNKNOWN = 0,
-	STRING,
-	SLICE,
-	CSTRING,
-};
+#include "utils.h"
 
 typedef struct String String;
 typedef struct StringArray StringArray;
@@ -41,6 +35,11 @@ void str_clone(String *dest, const String *src);
 void str_merge(String *dest, String *lhs, String *rhs);
 void str_join(String *dest, const StringArray *sa, const String *separator);
 void str_concatenate(String *dest, const StringArray *sa);
+int str_index(const String *str, const String *substr);
+int str_index_byte(const String *str, const char byte);
+size_t str_count(const String *str, const String *substr);
+size_t str_count_indices(const String *str, const String *substr, Array *arr);
+StringArray* str_split(const String *str, const String *separator);
 
 /* +---------------------------------- STRING ARRAY ----------------------------------+ */
 void str_array_init(StringArray *sa, size_t capacity);
@@ -81,8 +80,6 @@ void str_dbg_print(String *str);
 void str_trim_right_space(String *str);
 void str_trim_left_space(String *str);
 void str_trim_space(String *str);
-int str_index(String *str);
 int str_last_index_char(const String *str, const char c);
-size_t str_count(String *str, String *sep);
-StringArray *str_split(String *str, String *sep);
+
 #endif /* STR_H */

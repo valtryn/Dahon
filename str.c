@@ -1,9 +1,11 @@
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 
 #include "str.h"
+#include "utils.h"
 
 #define COPY 0
 #define MOVE 1
@@ -102,6 +104,115 @@ void str_concatenate(String *dest, const StringArray *sa)
 {
 	str_join(dest, sa, NULL);
 }
+
+int str_index(const String *str, const String *substr)
+{
+	if (str_len(substr) == 0 || str_len(str) == 0 || str_len(str) < str_len(substr))
+		return -1;
+	if (str_len(substr) == 1) {
+		return str_index_byte(str, (const char)str_view(substr)[0]);
+	}
+	for (size_t i = 0; i <= str_len(str) - str_len(substr); i++) {
+		const unsigned char *src_d = str_view(str);
+		const unsigned char *sub_d = str_view(substr);
+		if (src_d[i] == sub_d[0]) {
+			if (memcmp(src_d + i, sub_d, str_len(substr)) == 0)
+				return (i <= INT_MAX) ? (int)i : -1; // TODO: maybe fix this?
+		}
+	}
+	return -1;
+}
+
+int str_index_byte(const String *str, const char byte)
+{
+	if (str_len(str) == 0)
+		return -1;
+	for (size_t i = 0; i < str_len(str); i++) {
+		if (str_view(str)[i] == (const unsigned char)byte)
+			return (i <= INT_MAX) ? (int)i : -1; // TODO: maybe fix this?
+	}
+	return -1;
+}
+
+size_t str_count(const String *str, const String *substr)
+{
+	return str_count_indices(str, substr, NULL);
+}
+
+size_t str_count_indices(const String *str, const String *substr, Array *arr)
+{
+	size_t ret = 0;
+	if (str_len(str) < str_len(substr))
+		return ret;
+	if (str_len(substr) == 0) {
+		return str_len(str) + 1;
+	}
+	if (str_len(substr) == 1) {
+		for (size_t i = 0; i < str_len(str); i++) {
+			if (str_view(str)[i] == str_view(substr)[0]) {
+				if (arr != NULL)
+					array_append(arr, &i);
+				ret++;
+			}
+		}
+		return ret;
+	}
+	// TODO: maybe reuse code from str_index
+	for (size_t i = 0; i <= str_len(str) - str_len(substr); i++) {
+		const unsigned char *src_d = str_view(str);
+		const unsigned char *sub_d = str_view(substr);
+		if (src_d[i] == sub_d[0]) {
+			if (memcmp(src_d + i, sub_d, str_len(substr)) == 0) {
+				if (arr != NULL)
+					array_append(arr, &i);
+				ret++;
+				i += str_len(substr) - 1;
+			}
+		}
+	}
+	return ret;
+}
+
+StringArray* str_split(const String *str, const String *separator)
+{
+	Array arr = {0};
+	StringArray *sa = NULL;
+	array_init(&arr, sizeof(size_t), 1);
+	size_t count = str_count_indices(str, separator, &arr);
+	if (count == 0) {
+		goto exit;
+	}
+	sa = malloc(sizeof(StringArray));
+	str_array_init(sa, count);
+	// special case where the separator is ""
+	if (count == str_len(str) + 1) {
+		for (size_t i = 0; i < arr.length; i++) {
+			String temp;
+			str_clone_from_buf(&temp, str_view(str) + i, i);
+			str_array_append_move(sa, &temp);
+		}
+		goto exit;
+	}
+	size_t prev = 0;
+	for (size_t i = 0; i < arr.length; i++) {
+		size_t data = *(size_t*)array_at(&arr, i);
+		String temp;
+		str_clone_from_buf(&temp, str_view(str) + prev, data - prev);
+		str_array_append_move(sa, &temp);
+		prev = data + str_len(separator);
+	}
+	size_t last_elem = *(size_t*)array_at(&arr, arr.length - 1);
+	if (str_len(str) - last_elem + str_len(separator)  > 0) {
+		/*printf("size: %ld | strlen: %ld | last: %ld\n", str_len(str) - last_elem, str_len(str), last_elem);*/
+		String temp;
+		str_clone_from_buf(&temp, str_view(str) + last_elem + str_len(separator), str_len(str) - (last_elem + str_len(separator)));
+		str_array_append_move(sa, &temp);
+	}
+exit:
+	array_clear(&arr);
+	return sa;
+}
+
 /* +---------------------------------- STRING ARRAY ----------------------------------+ */
 
 // Initializes a dynamic string array with a specified capacity
@@ -251,8 +362,9 @@ size_t str_write_string_move(StringBuilder *sb, String *str)
 
 size_t str_write_string_move_free(StringBuilder *sb, String *str)
 {
+	size_t len = str_len(str);
 	str_array_append_move_free(&sb->arr, str);
-	return str_len(str);
+	return len;
 }
 
 void str_builder_grow(StringBuilder *sb, size_t size)

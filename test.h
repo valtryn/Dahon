@@ -2,6 +2,7 @@
 #define TEST_H
 
 #include "str.h"
+#include "utils.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -136,5 +137,48 @@ void test_str_concatenate(void)
 	str_clear(&sep);
 }
 
+void test_str_index(void)
+{
+	String str;
+	String substr;
+	str_clone_from_cstr(&str, "string");
+	str_clone_from_cstr(&substr, "ing");
+	int ret = str_index(&str, &substr);
+	printf("ret: %d\n", ret);
+	str_clear(&str);
+	str_clear(&substr);
+}
+void test_str_split(void)
+{
+	FILE* fp = fopen("./benchmark/shakespeare.txt", "r");
 
+	// Get the file size
+	fseek(fp, 0, SEEK_END);
+	long file_size = ftell(fp);
+	rewind(fp);
+
+	// Allocate memory for the buffer
+	char* buffer = (char*)malloc(file_size + 1);
+
+	// Read the file contents into the buffer
+	size_t bytes_read = fread(buffer, 1, file_size, fp);
+
+	Array arr = {0};
+	array_init(&arr, sizeof(size_t), 1<<8);
+	String str;
+	String substr;
+	/*str_clone_from_cstr(&str, "--dog--cat--cow--s");*/
+	str_clone_from_buf(&str, buffer, bytes_read);
+	str_clone_from_cstr(&substr, "the");
+	StringArray *sa = str_split(&str, &substr);
+	/*for (size_t i = 0; i < sa->length; i++) {*/
+	/*	str_dbg_print(str_array_at(sa, i));*/
+	/*}*/
+	str_array_free(sa);
+	array_clear(&arr);
+	str_clear(&str);
+	str_clear(&substr);
+	free(buffer);
+	fclose(fp);
+}
 #endif /* TEST_H */
