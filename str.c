@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -123,6 +124,21 @@ int str_index(const String *str, const String *substr)
 	return -1;
 }
 
+int str_last_index(const String *str, const String *substr)
+{
+	Array arr;
+	array_init(&arr, sizeof(size_t), str_len(str));
+	size_t ret = str_count_indices(str, substr, &arr);
+	if (ret == 0) {
+		array_clear(&arr);
+		return -1;
+	}
+
+	int last_index = *(int*)array_at(&arr, arr.length - 1);
+	array_clear(&arr);
+	return last_index;
+}
+
 int str_index_byte(const String *str, const char byte)
 {
 	if (str_len(str) == 0)
@@ -211,6 +227,39 @@ StringArray* str_split(const String *str, const String *separator)
 exit:
 	array_clear(&arr);
 	return sa;
+}
+
+void str_trim_left_space(String *str)
+{
+	if (str_len(str) == 0) {
+		return;
+	}
+	size_t idx = 0;
+	for (size_t i = 0; i < str_len(str); i++) {
+		if (!isspace(str_view(str)[i])) {
+			idx = i;
+			break;
+		}
+	}
+	if (idx > 0) {
+		memmove(str->data, str->data + idx, str_len(str) - idx);
+		str->length = str_len(str) - idx;
+	}
+}
+
+void str_trim_right_space(String *str)
+{
+	for (size_t i = str_len(str); i > 0; i--) {
+		if (!isspace(str_view(str)[i - 1])) {
+			str->length = i;
+			break;
+		}
+	}
+}
+
+void str_trim_space(String *str) {
+	str_trim_right_space(str);
+	str_trim_left_space(str);
 }
 
 /* +---------------------------------- STRING ARRAY ----------------------------------+ */
@@ -454,8 +503,6 @@ inline size_t str_len(const String *str)
 {
 	return str->length;
 }
-
-
 
 /* +---------------------------------- DEBUG FUNC ----------------------------------+ */
 void str_dbg_print(String *str)

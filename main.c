@@ -11,5 +11,7 @@ int main(void)
 	/*test_str_merge();*/
 	/*test_str_concatenate();*/
 	/*test_str_index();*/
-	test_str_split();
+	/*test_str_split();*/
+	/*test_str_trim_space();*/
+	test_str_last_index();
 }

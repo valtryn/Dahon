@@ -40,7 +40,9 @@ int str_index_byte(const String *str, const char byte);
 size_t str_count(const String *str, const String *substr);
 size_t str_count_indices(const String *str, const String *substr, Array *arr);
 StringArray* str_split(const String *str, const String *separator);
-
+void str_trim_right_space(String *str);
+void str_trim_left_space(String *str);
+void str_trim_space(String *str);
 /* +---------------------------------- STRING ARRAY ----------------------------------+ */
 void str_array_init(StringArray *sa, size_t capacity);
 void str_array_append(StringArray *sa, const String *str);
@@ -53,6 +55,7 @@ void str_array_clear(StringArray *sa);
 void str_array_free(StringArray *sa);
 void str_array_shrink(StringArray *sa, size_t size);
 size_t str_array_total_str_len(const StringArray *sa);
+int str_last_index(const String *str, const String *substr);
 
 /* +---------------------------------- STRING BUILDER ----------------------------------+ */
 void str_builder_init(StringBuilder *sb, size_t capacity);
@@ -77,9 +80,5 @@ void str_normalize(String *str);
 void str_dbg_print(String *str);
 
 /* +---------------------------------- UNDER DEVELOPMENT FUNC ----------------------------------+ */
-void str_trim_right_space(String *str);
-void str_trim_left_space(String *str);
-void str_trim_space(String *str);
-int str_last_index_char(const String *str, const char c);
-
+int last_index_byte(const String *Str, const char c);
 #endif /* STR_H */

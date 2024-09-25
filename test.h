@@ -181,4 +181,28 @@ void test_str_split(void)
 	free(buffer);
 	fclose(fp);
 }
+
+void test_str_trim_space(void)
+{
+	String str;
+	str_clone_from_cstr(&str, "xyz");
+	str_dbg_print(&str);
+	str_trim_space(&str);
+	str_dbg_print(&str);
+	str_clear(&str);
+
+}
+
+void test_str_last_index(void)
+{
+	String str;
+	String substr;
+	str_clone_from_cstr(&str, "test");
+	str_clone_from_cstr(&substr, "tt");
+	str_dbg_print(&str);
+	int index = str_last_index(&str, &substr);
+	printf("last index: %d\n", index);
+	str_clear(&str);
+	str_clear(&substr);
+}
 #endif /* TEST_H */
