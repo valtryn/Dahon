@@ -5,8 +5,10 @@
 #include <string.h>
 #include <assert.h>
 
+#include <stdlib.h>
+
 #include "str.h"
-#include "utils.h"
+#include "ds.h"
 
 #define COPY 0
 #define MOVE 1
@@ -96,7 +98,7 @@ void str_join(String *dest, const StringArray *sa, const String *separator)
 		str_array_shrink(&sb.arr, sb.arr.length - 1);
 	String clone = {0};
 	str_builder_to_string(&sb, &clone);
-	dest->data = (unsigned char *)str_view(&clone);
+	dest->data = clone.data;
 	dest->length = str_len(&clone);
 	str_builder_reset(&sb);
 }
@@ -126,16 +128,16 @@ int str_index(const String *str, const String *substr)
 
 int str_last_index(const String *str, const String *substr)
 {
-	Array arr;
-	array_init(&arr, sizeof(size_t), str_len(str));
+	DynamicArray arr;
+	dynamic_array_init(&arr, sizeof(size_t), str_len(str));
 	size_t ret = str_count_indices(str, substr, &arr);
 	if (ret == 0) {
-		array_clear(&arr);
+		dynamic_array_clear(&arr);
 		return -1;
 	}
 
-	int last_index = *(int*)array_at(&arr, arr.length - 1);
-	array_clear(&arr);
+	int last_index = *(int*)dynamic_array_at(&arr, arr.length - 1);
+	dynamic_array_clear(&arr);
 	return last_index;
 }
 
@@ -155,7 +157,7 @@ size_t str_count(const String *str, const String *substr)
 	return str_count_indices(str, substr, NULL);
 }
 
-size_t str_count_indices(const String *str, const String *substr, Array *arr)
+size_t str_count_indices(const String *str, const String *substr, DynamicArray *arr)
 {
 	size_t ret = 0;
 	if (str_len(str) < str_len(substr))
@@ -167,7 +169,7 @@ size_t str_count_indices(const String *str, const String *substr, Array *arr)
 		for (size_t i = 0; i < str_len(str); i++) {
 			if (str_view(str)[i] == str_view(substr)[0]) {
 				if (arr != NULL)
-					array_append(arr, &i);
+					dynamic_array_append(arr, &i);
 				ret++;
 			}
 		}
@@ -180,7 +182,7 @@ size_t str_count_indices(const String *str, const String *substr, Array *arr)
 		if (src_d[i] == sub_d[0]) {
 			if (memcmp(src_d + i, sub_d, str_len(substr)) == 0) {
 				if (arr != NULL)
-					array_append(arr, &i);
+					dynamic_array_append(arr, &i);
 				ret++;
 				i += str_len(substr) - 1;
 			}
@@ -191,14 +193,16 @@ size_t str_count_indices(const String *str, const String *substr, Array *arr)
 
 StringArray* str_split(const String *str, const String *separator)
 {
-	Array arr = {0};
+	DynamicArray arr = {0};
 	StringArray *sa = NULL;
-	array_init(&arr, sizeof(size_t), 1);
+	dynamic_array_init(&arr, sizeof(size_t), 1);
 	size_t count = str_count_indices(str, separator, &arr);
+	sa = malloc(sizeof(StringArray));
 	if (count == 0) {
+		str_array_init(sa, 1);
+		str_array_append(sa, str);
 		goto exit;
 	}
-	sa = malloc(sizeof(StringArray));
 	str_array_init(sa, count);
 	// special case where the separator is ""
 	if (count == str_len(str) + 1) {
@@ -211,13 +215,13 @@ StringArray* str_split(const String *str, const String *separator)
 	}
 	size_t prev = 0;
 	for (size_t i = 0; i < arr.length; i++) {
-		size_t data = *(size_t*)array_at(&arr, i);
+		size_t data = *(size_t*)dynamic_array_at(&arr, i);
 		String temp;
 		str_clone_from_buf(&temp, str_view(str) + prev, data - prev);
 		str_array_append_move(sa, &temp);
 		prev = data + str_len(separator);
 	}
-	size_t last_elem = *(size_t*)array_at(&arr, arr.length - 1);
+	size_t last_elem = *(size_t*)dynamic_array_at(&arr, arr.length - 1);
 	if (str_len(str) - last_elem + str_len(separator)  > 0) {
 		/*printf("size: %ld | strlen: %ld | last: %ld\n", str_len(str) - last_elem, str_len(str), last_elem);*/
 		String temp;
@@ -225,7 +229,7 @@ StringArray* str_split(const String *str, const String *separator)
 		str_array_append_move(sa, &temp);
 	}
 exit:
-	array_clear(&arr);
+	dynamic_array_clear(&arr);
 	return sa;
 }
 
@@ -264,7 +268,8 @@ void str_trim_space(String *str) {
 
 /* +---------------------------------- STRING ARRAY ----------------------------------+ */
 
-// Initializes a dynamic string array with a specified capacity
+// Initializes a dynamic string array with a specified capacity.
+// NOTE: the caller is responsible for allocating the actual StringArray struct. maybe we should fix this?
 void str_array_init(StringArray *sa, size_t capacity)
 {
 	assert(capacity > 0 && "ERROR: capacity must be > 0");

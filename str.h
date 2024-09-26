@@ -2,7 +2,7 @@
 #define STR_H
 
 #include <stdlib.h>
-#include "utils.h"
+#include "ds.h"
 
 typedef struct String String;
 typedef struct StringArray StringArray;
@@ -38,7 +38,7 @@ void str_concatenate(String *dest, const StringArray *sa);
 int str_index(const String *str, const String *substr);
 int str_index_byte(const String *str, const char byte);
 size_t str_count(const String *str, const String *substr);
-size_t str_count_indices(const String *str, const String *substr, Array *arr);
+size_t str_count_indices(const String *str, const String *substr, DynamicArray *arr);
 StringArray* str_split(const String *str, const String *separator);
 void str_trim_right_space(String *str);
 void str_trim_left_space(String *str);
