@@ -5,8 +5,6 @@
 #include <string.h>
 #include <assert.h>
 
-#include <stdlib.h>
-
 #include "str.h"
 #include "ds.h"
 
@@ -278,7 +276,7 @@ void str_array_init(StringArray *sa, size_t capacity)
 	sa->string = calloc(capacity, sizeof(String));
 }
 
-void _str_array_append(StringArray *sa, String *str, int opt)
+static void _str_array_append(StringArray *sa, String *str, int opt)
 {
 	if (sa->length >= sa->capacity) {
 		sa->capacity *= 2;
@@ -476,6 +474,7 @@ inline const char* str_view_cstr(const String *str)
 {
 	return (const char *)str->data;
 }
+
 // Appends a null terminator to the String's data buffer.
 // Does not modify the String's length.
 void str_normalize(String *str)

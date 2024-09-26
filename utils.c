@@ -72,7 +72,7 @@ exit:
 	return ft;
 }
 
- String* utils_posix_path_abs(String *path)
+String* utils_posix_path_abs(String *path)
 {
 	String *abs = str_init();
 	str_normalize(path);
@@ -86,8 +86,7 @@ exit:
 	return abs;
 }
 
-
-StringArray* _utils_posix_list_dir_cap(String *path, int capacity)
+static StringArray* _utils_posix_list_dir_cap(String *path, int capacity)
 {
 	DIR *dir = NULL;
 	struct dirent *entries;
