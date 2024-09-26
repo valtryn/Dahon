@@ -472,7 +472,12 @@ inline const unsigned char* str_view(const String *str)
 	return str->data;
 }
 
-// Appends a null terminator to make the string compatible with existing C string libraries.
+inline const char* str_view_cstr(const String *str)
+{
+	return (const char *)str->data;
+}
+// Appends a null terminator to the String's data buffer.
+// Does not modify the String's length.
 void str_normalize(String *str)
 {
 	if (str != NULL && str->data != NULL) {
@@ -512,5 +517,9 @@ inline size_t str_len(const String *str)
 /* +---------------------------------- DEBUG FUNC ----------------------------------+ */
 void str_dbg_print(String *str)
 {
+	if (str == NULL) {
+		printf("error: str is NULL\n");
+		return;
+	}
 	printf("string: %.*s | length: %ld\n", (int)str_len(str), str_view(str), str_len(str));
 }

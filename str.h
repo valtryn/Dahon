@@ -70,6 +70,7 @@ void str_builder_free(StringBuilder *sb);
 
 /* +---------------------------------- UTIL FUNC ----------------------------------+ */
 const unsigned char* str_view(const String *str);
+const char* str_view_cstr(const String *str);
 void str_reset(String *str);
 void str_clear(String *str);
 void str_free(String *str);
