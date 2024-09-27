@@ -26,15 +26,13 @@ struct StringBuilder {
 	StringArray arr;
 };
 
-String* str_init(void);
-// TODO: make a heap variant of these functions
-void str_clone_from_buf(String *dest, const void *src_buf, size_t length);
-void str_clone_from_cstr(String *dest, const char *src_cstr);
-void str_clone_to_cstr(char **dest, const String *src);
-void str_clone(String *dest, const String *src);
-void str_merge(String *dest, String *lhs, String *rhs);
-void str_join(String *dest, const StringArray *sa, const String *separator);
-void str_concatenate(String *dest, const StringArray *sa);
+String* str_clone_from_buf(const void *src, size_t length);
+String* str_clone_from_cstr(const char *src);
+char*   str_clone_to_cstr(const String *src);
+String* str_clone(const String *src);
+String* str_merge(String *lhs, String *rhs);
+String* str_join(const StringArray *sa, const String *separator);
+String* str_concatenate(const StringArray *sa);
 int str_index(const String *str, const String *substr);
 int str_index_byte(const String *str, const char byte);
 size_t str_count(const String *str, const String *substr);
@@ -47,7 +45,6 @@ void str_trim_space(String *str);
 void str_array_init(StringArray *sa, size_t capacity);
 void str_array_append(StringArray *sa, const String *str);
 void str_array_append_move(StringArray *sa, String *str);
-void str_array_append_move_free(StringArray *sa, String *str);
 String* str_array_at(const StringArray *sa, size_t index);
 void str_array_remove_at_unordered(StringArray *sa, size_t index);
 void str_array_reset(StringArray *sa);
@@ -61,7 +58,6 @@ int str_last_index(const String *str, const String *substr);
 void str_builder_init(StringBuilder *sb, size_t capacity);
 size_t str_write_string(StringBuilder *sb, const String* str);
 size_t str_write_string_move(StringBuilder *sb, String* str);
-size_t str_write_string_move_free(StringBuilder *sb, String *str);
 void str_builder_to_string(StringBuilder *sb, String *dest);
 void str_builder_grow(StringBuilder *sb, size_t size);
 void str_builder_reset(StringBuilder *sb);
@@ -71,11 +67,9 @@ void str_builder_free(StringBuilder *sb);
 /* +---------------------------------- UTIL FUNC ----------------------------------+ */
 const unsigned char* str_view(const String *str);
 const char* str_view_cstr(const String *str);
-void str_reset(String *str);
 void str_clear(String *str);
 void str_free(String *str);
 size_t str_len(const String *str);
-void str_normalize(String *str);
 
 /* +---------------------------------- DEBUG FUNC ----------------------------------+ */
 void str_dbg_print(String *str);
