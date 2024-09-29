@@ -296,7 +296,7 @@ static void _str_array_append(StringArray *sa, String *str, int opt)
 	if (opt == COPY) {
 		/*sa->string[sa->length].data = malloc(sizeof(unsigned char) * str->length);*/
 		str_normalize(sa->string[sa->length].data, str_len(str));
-		memcpy(sa->string[sa->length].data, str->data, str->length);
+		memcpy(sa->string[sa->length].data, str->data, str_len(str));
 	} else if (opt == MOVE) {
 		sa->string[sa->length].data = str->data;
 		free(str);
@@ -410,16 +410,10 @@ size_t str_write_string(StringBuilder *sb, const String *str)
 
 size_t str_write_string_move(StringBuilder *sb, String *str)
 {
+	size_t len = str_len(str);
 	str_array_append_move(&sb->arr, str);
-	return str_len(str);
+	return len;
 }
-
-/*size_t str_write_string_move_free(StringBuilder *sb, String *str)*/
-/*{*/
-/*	size_t len = str_len(str);*/
-/*	str_array_append_move_free(&sb->arr, str);*/
-/*	return len;*/
-/*}*/
 
 void str_builder_grow(StringBuilder *sb, size_t size)
 {
@@ -429,6 +423,7 @@ void str_builder_grow(StringBuilder *sb, size_t size)
 	sb->capacity = size;
 }
 
+// TODO: return an actual copy of the internal buffer of the `String`
 void str_builder_to_string(StringBuilder *sb, String *dest)
 {
 	size_t total_len = str_array_total_str_len(&sb->arr);
