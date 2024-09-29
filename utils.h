@@ -13,7 +13,7 @@ enum FileType {
 String* utils_posix_base(const String *str);
 enum FileType utils_posix_file_type(String *abspath);
 String* utils_posix_path_abs(String *path);
-StringArray* utils_posix_list_dir(String *path);
+void utils_posix_list_dir(String* path, StringArray *str, int depth);
 
 String* utils_win_base(const String *str);
 enum FileType utils_win_file_type(String *abspath);
