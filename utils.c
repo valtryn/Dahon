@@ -1,5 +1,5 @@
 // NOTE: not really sure what the side effects are if I define this.
-#define _XOPEN_SOURCE 500
+#define _DEFAULT_SOURCE
 
 #include <string.h>
 #include <stdio.h>
@@ -7,6 +7,7 @@
 #include <dirent.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <errno.h>
 
 #include "str.h"
 #include "utils.h"
@@ -19,7 +20,7 @@
 String* utils_posix_base(const String *path)
 {
 	StringArray *sa = NULL;
-	String *sep;
+	String *sep = NULL;
 	String *base = NULL;
 	// return "." if the path is empty ""
 	if (str_len(path) == 0) {
@@ -41,9 +42,8 @@ String* utils_posix_base(const String *path)
 			break;
 		}
 	}
-	if (str_len(base) == 0) {
+	if (str_len(base) == 0)
 		base = str_clone_from_cstr("/");
-	}
 exit1:
 	str_array_free(sa);
 	str_free(sep);
@@ -96,47 +96,78 @@ String* utils_posix_path_abs(String *path)
 }
 
 /*
- * TODO: optimize this piece of shit
- * - it uses too much memory
- * - the string_builder is probably the problem
+* TODO: 
+*	- optimize this piece of shit
+*	- it uses too much memory
+*	- the string_builder is probably the problem
+*	- use dfs
  */
 void utils_posix_list_dir(String* path, StringArray *sa, int depth)
 {
 	if (depth == 0)
 		return;
 
-	DIR *dir = NULL;
-	struct dirent *entries;
-	dir = opendir(str_view_cstr(path));
-	if (!dir)
+	if (str_len(path) == 0) {
+		printf("ERROR: cannot open path\n");
 		return;
+	}
 
-	while ((entries = readdir(dir)) != NULL) {
-		String *entry = str_clone_from_cstr(entries->d_name);
-		if (memcmp(str_view(entry), ".", 1) == 0 || memcmp(str_view(entry), "..", 2) == 0) {
-			str_free(entry);
+	DIR *dir = NULL;
+	struct dirent *entry;
+	dir = opendir(str_view_cstr(path));
+	if (!dir) {
+		fprintf(stderr, "ERROR: cannot open %s: %s\n", str_view_cstr(path), strerror(errno));
+		return;
+	}
+	while ((entry = readdir(dir)) != NULL) {
+		String *name = str_clone_from_cstr(entry->d_name);
+		if ((str_len(name) == 1 && memcmp(str_view(name), ".", 1) == 0) || ((str_len(name) == 2) && memcmp(str_view(name), "..", 2) == 0)) {
+			str_free(name);
 			continue;
 		}
+
 		StringBuilder sb;
-		str_builder_init(&sb, 100);
-		str_write_string(&sb, path);
-		str_write_string_move(&sb, str_clone_from_cstr("/"));
-		str_write_string_move(&sb, entry);
-		String *real_entry = malloc(sizeof(String));
-		str_builder_to_string(&sb, real_entry);
-		struct stat s;
-		if (stat(str_view_cstr(real_entry), &s) != 0) {
-			free(real_entry);
-			str_builder_clear(&sb);
-			continue;
-		}
-		if(S_ISDIR(s.st_mode)) {
-			str_array_append(sa, real_entry);
-			utils_posix_list_dir(real_entry, sa, (depth < 0) ? depth : depth -1 );
+		String *built_string;
+
+		str_builder_init(&sb, 10);
+		// TODO: this check wont handle "./././home". but its fine for now
+		if ((str_len(path) == 1 && str_view(path)[0] == '.') || (str_len(path) == 2 && memcmp(str_view(path), "./", 2) == 0)) {
+			str_write_string_move(&sb, name);
 		} else {
-			str_array_append(sa, real_entry);
+			str_write_string(&sb, path);
+			str_write_string_move(&sb, str_clone_from_cstr("/"));
+			str_write_string_move(&sb, name);
 		}
-		free(real_entry);
+
+		str_init(&built_string);
+		str_builder_to_string(&sb, built_string);
+		switch (entry->d_type) {
+			case DT_LNK:
+			case DT_REG:
+				str_array_append(sa, built_string);
+				break;
+			case DT_DIR:
+				str_array_append(sa, built_string);
+				utils_posix_list_dir(built_string, sa, (depth < 0) ? depth : depth -1 );
+				break;
+			case DT_UNKNOWN: {
+						 struct stat s;
+						 if (lstat(str_view_cstr(built_string), &s) != 0) {
+							 fprintf(stderr, "ERROR: cannot open %s: %s\n", str_view_cstr(built_string), strerror(errno));
+							 free(built_string);
+							 str_builder_clear(&sb);
+							 continue;
+						 }
+						 if (S_ISDIR(s.st_mode)) {
+							 str_array_append(sa, built_string);
+							 utils_posix_list_dir(built_string, sa, (depth < 0) ? depth : depth -1 );
+						 } else {
+							 str_array_append(sa, built_string);
+						 }
+					 }
+
+		}
+		free(built_string);
 		str_builder_clear(&sb);
 	}
 	closedir(dir);
