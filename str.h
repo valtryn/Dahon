@@ -26,6 +26,7 @@ struct StringBuilder {
 	StringArray arr;
 };
 
+void str_init(String **str);
 String* str_clone_from_buf(const void *src, size_t length);
 String* str_clone_from_cstr(const char *src);
 char*   str_clone_to_cstr(const String *src);

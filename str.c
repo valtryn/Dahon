@@ -21,7 +21,7 @@ do { \
 } while (0); 
 
 // Initialize a heap allocated `String`
-void _str_init(String **str)
+void str_init(String **str)
 {
 	*str = malloc(sizeof(String));
 	(*str)->data = NULL;
@@ -33,7 +33,7 @@ String* str_clone_from_buf(const void *src, size_t length)
 {
 	const unsigned char *buf = (const unsigned char *)src;
 	String *str = NULL;
-	_str_init(&str);
+	str_init(&str);
 	if (length == 0) {
 		return str;
 	}
@@ -67,7 +67,7 @@ char* str_clone_to_cstr(const String *src)
 String* str_clone(const String *src)
 {
 	String *str = NULL;
-	_str_init(&str);
+	str_init(&str);
 	str_normalize(str->data, str_len(src));
 	if (str->data == NULL)
 		return NULL;
@@ -80,7 +80,7 @@ String* str_clone(const String *src)
 String* str_merge(String *lhs, String *rhs)
 {
 	String *str = NULL;
-	_str_init(&str);
+	str_init(&str);
 	size_t l = str_len(lhs);
 	size_t r = str_len(rhs);
 	str_normalize(str->data, l + r);
@@ -95,7 +95,7 @@ String* str_join(const StringArray *sa, const String *separator)
 {
 	StringBuilder sb = {0};
 	String *str = NULL;
-	_str_init(&str);
+	str_init(&str);
 	str_builder_init(&sb, str_array_total_str_len(sa));
 	for (size_t i = 0; i < sa->length; i++) {
 		// writes a copy of passed string
